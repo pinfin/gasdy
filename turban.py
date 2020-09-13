@@ -34,6 +34,7 @@ class PrelimDesign:
         self.max_stage = None
         self.min_stage = None
 
+        # увнутренние переменные
         self.x = None
         self.cp = None
         self.p_ex = None
@@ -59,7 +60,11 @@ class PrelimDesign:
         self.v2_n = None
         self.v2_nr = None
 
-        self.def_inlet_radius_ratio = 0.9
+        self.inlet_radius_ratio = 0.9
+        self.exit_radius_ratio = None
+        self._d_in_ = None
+        self._d_ex_ = None
+        self.func_d = None
 
         self.u_1 = None
         self.u_n = None
@@ -111,12 +116,24 @@ class PrelimDesign:
         self.set_diameters(d_in, d_ex, units)
 
     def set_tip_diameters(self, d_in, d_ex, exit_radius_ratio, units=SI):
-        d_in = (1 + self.def_inlet_radius_ratio) / 2 * d_in
+        if self.func_d is None:
+            self.func_d = self.set_tip_diameters
+
+        self._d_in_ = d_in
+        self._d_ex_ = d_ex
+        self.exit_radius_ratio = exit_radius_ratio
+        d_in = (1 + self.inlet_radius_ratio) / 2 * d_in
         d_ex = (1 + exit_radius_ratio) / 2 * d_ex
         self.set_diameters(d_in, d_ex, units)
 
     def set_hub_diameters(self, d_in, d_ex, exit_radius_ratio, units=SI):
-        d_in = (1 + self.def_inlet_radius_ratio) / 2 * d_in / self.def_inlet_radius_ratio
+        if self.func_d is None:
+            self.func_d = self.set_hub_diameters
+
+        self._d_in_ = d_in
+        self._d_ex_ = d_ex
+        self.exit_radius_ratio = exit_radius_ratio
+        d_in = (1 + self.inlet_radius_ratio) / 2 * d_in / self.inlet_radius_ratio
         d_ex = (1 + exit_radius_ratio) / 2 * d_ex / exit_radius_ratio
         self.set_diameters(d_in, d_ex, units)
 
@@ -210,6 +227,7 @@ class PrelimDesign:
         self.vx_n = self.vx_nd * self.ratio_axial_c ** 0.5
         self.v2_n = (self.vu_2n ** 2 + self.vx_n ** 2) ** 0.5
         self.v2_nr = self.v2_n
+
         if self.exit_vane:
             self.v2_n = self.vx_n
 
@@ -218,6 +236,18 @@ class PrelimDesign:
             raise Exception('Отрицательная температцра на выходе')
 
         self.ro = self.p_ex / (self.R * self.t_ex)
+        # если задано соотношени радиусов go to 8
+        # TODO:
+        if self.exit_angle is None:
+            area_exit = self.mf / self.ro / self.vx_n
+            aa = area_exit / math.pi / self.d_ex ** 2
+            if aa >= 1:
+                print('Недостаточная площадь на выходе')
+                self.inlet_radius_ratio = 0.9
+                self.func_d(self._d_in_, self._d_ex_, 0.7)
+                return
+        rr_exit = (1 - aa) / (1 + aa)
+
 
 
     def get_es(self, del_ht, n_stage):
