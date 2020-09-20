@@ -34,7 +34,7 @@ class PrelimDesign:
         self.max_stage = None
         self.min_stage = None
 
-        # увнутренние переменные
+        # внутренние переменные
         self.x = None
         self.cp = None
         self.p_ex = None
@@ -68,6 +68,8 @@ class PrelimDesign:
 
         self.u_1 = None
         self.u_n = None
+
+        self.conv = 0.01
 
     def print_task(self):
         print(5*'\t' + 'TASK INFO' + 5*'\t')
@@ -247,6 +249,18 @@ class PrelimDesign:
                 self.func_d(self._d_in_, self._d_ex_, 0.7)
                 return
         rr_exit = (1 - aa) / (1 + aa)
+        # TODO: реализация логики для задания диаметров на ступице и переферии
+
+        # if n_stage == 1:
+        #     self.conv = 1e-4
+        # if abs(rr_exit - self.exit_radius_ratio) < self.conv:
+        #     # TODO:
+        #     pass
+
+
+
+
+
 
 
 
